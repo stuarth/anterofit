@@ -154,7 +154,7 @@
 //! `Future::poll()` and `Future::wait()` without external types so you
 //! have a choice over whether you want to use futures in your app or not.
 #![warn(missing_docs)]
-#![cfg_attr(feature = "nightly", feature(specialization))]
+#![cfg_attr(feature = "nightly", feature(specialization, trace_macros))]
 #![recursion_limit="100"]
 
 #[macro_use]
@@ -178,6 +178,11 @@ extern crate url;
 pub extern crate hyper;
 
 mod adapter;
+
+// Shh, don't tell anyone we just copied the library
+#[macro_use]
+#[path = "parse-generics-shim/mod.rs"]
+mod parse_generics_shim;
 
 #[macro_use]
 mod macros;
@@ -229,4 +234,16 @@ pub fn get_adapter<D, A: AbsAdapter, F: FnOnce(&D) -> &A>(delegate: &D, map: F) 
 pub trait UnsizeService {
     /// Unsize the given `Arc<A: AbsAdapter>` to the service trait object.
     fn from_adapter<A>(adpt: Arc<A>) -> Arc<Self> where A: AbsAdapter;
+}
+
+#[cfg(all(test, feature = "nightly"))]
+trace_macros!(true);
+
+#[cfg(test)]
+service! {
+    trait TestService {
+        fn hello(&self) {
+            GET("/hello")
+        }
+    }
 }
